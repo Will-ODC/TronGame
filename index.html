@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tron Multiplayer Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Lobby Screen -->
+        <div id="lobby" class="screen active">
+            <h1>Tron Multiplayer Game</h1>
+            
+            <div class="lobby-container">
+                <div class="join-section">
+                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                    <input type="text" id="roomId" placeholder="Room ID (optional)" maxlength="20">
+                    <button id="joinButton">Join Game</button>
+                </div>
+                
+                <div id="lobbyInfo" class="lobby-info hidden">
+                    <h2>Room: <span id="currentRoom"></span></h2>
+                    
+                    <div class="players-list">
+                        <h3>Players:</h3>
+                        <ul id="playersList"></ul>
+                    </div>
+                    
+                    <div class="game-settings">
+                        <label>
+                            Game Speed:
+                            <input type="range" id="speedSlider" min="1" max="5" value="2" step="1">
+                            <span id="speedValue">2</span>
+                        </label>
+                    </div>
+                    
+                    <button id="readyButton" class="ready-button">Ready</button>
+                    <div id="countdownDisplay" class="countdown hidden"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game" class="screen">
+            <div class="game-header">
+                <div id="gameInfo"></div>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="gameOver" class="screen">
+            <div class="game-over-content">
+                <h1>Game Over!</h1>
+                <h2 id="winnerText"></h2>
+                <button id="continueButton">Continue</button>
+                <button id="quitButton">Quit to Lobby</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

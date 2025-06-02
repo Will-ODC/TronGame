@@ -1,0 +1,55 @@
+Tron Game Specifications
+
+Multiplayer Game - Implementation Brief
+Project Overview
+
+Type: Real-time multiplayer web game (up to 4 players)
+Graphics: Simple Snake-like graphics using HTML5 Canvas
+Input: Keyboard controls
+Network: Real-time synchronization required
+Persistence: None needed (game state resets on server restart)
+
+Tech Stack
+
+Frontend: HTML5 Canvas + Vanilla JavaScript
+Backend: Node.js + Socket.io
+Deployment: Replit (or Railway/Render as alternatives)
+
+Architecture
+Client (Canvas + JS) ↔ WebSocket (Socket.io) ↔ Node.js Server
+Project Structure
+my-snake-game/
+├── server.js      # Node.js backend with Socket.io server
+├── package.json   # Dependencies (socket.io, express)
+├── index.html     # Game frontend
+├── game.js        # Canvas rendering + Socket.io client
+└── style.css      # Basic styling
+Key Requirements
+
+Server: Maintains authoritative game state, broadcasts updates ~60fps to all clients
+Client: Handles canvas drawing, keyboard input, receives game updates
+Real-time Communication: Socket.io for bidirectional client-server messaging
+Game Rooms: Keep game sessions in server memory (no database)
+No Authentication: Simple join-by-URL gameplay
+
+Deployment Target
+
+Replit for easy deployment and sharing
+Server gets auto-generated URL for multiplayer access
+Free tier acceptable for development/testing
+
+Developer Context
+
+Beginner web development, medium programming experience
+Learning JavaScript
+Previous React experience but using vanilla JS for this project
+Wants backend learning experience
+
+Game Rules:
+- Each player will control a line that begins moving/growing in 1 direction and persists throughout the game
+- Each player controls their line using 2 buttons to turn left/right relative to the line's current direction
+- All player see the same screen at all times, and can only control their line
+- There are 4 walls/boundaries
+- If a player's line collides with the boundary or another player's line, they are dead and can no longer move
+- Once 3 players die, the surviving player is declared the winner and game prompts each player to continue or quit
+- Game requires 2 players confirmed before starting/restarting, there is a 10 second countdown once 2 or more players have joined/confirmed
