@@ -1,6 +1,9 @@
 # Claude AI settings
 .claude/
 
+# Project specs
+Tron Game Specs.txt
+
 # Node modules
 node_modules/
 
