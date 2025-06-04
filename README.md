@@ -56,7 +56,7 @@ Visit `http://localhost:3000` to play locally.
 ## Project Structure
 
 ```
-tron-game/
+.
 ├── server.js           # Main server file
 ├── index.html          # Game UI
 ├── game.js            # Client-side game logic
