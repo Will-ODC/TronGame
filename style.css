@@ -272,6 +272,73 @@ input[type="range"]::-moz-range-thumb {
     background: linear-gradient(45deg, #ff0080, #ff00ff);
 }
 
+/* Leaderboard Styles */
+.leaderboard-section,
+.room-stats-section {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.leaderboard-section h3,
+.room-stats-section h3 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #00ffff;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+    border-left: 3px solid #00ffff;
+}
+
+.leaderboard-item .rank {
+    font-weight: bold;
+    font-size: 1.1em;
+    min-width: 40px;
+}
+
+.leaderboard-item .player-name {
+    font-weight: bold;
+    color: #ffffff;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.leaderboard-item .stats {
+    color: #cccccc;
+    font-size: 0.9em;
+    text-align: right;
+}
+
+.room-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 12px;
+    margin: 3px 0;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 3px;
+}
+
+.room-stat .stat-label {
+    color: #cccccc;
+}
+
+.room-stat .stat-value {
+    font-weight: bold;
+    color: #00ff80;
+}
+
+.game-over-buttons {
+    margin-top: 20px;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .lobby-container {

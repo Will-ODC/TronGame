@@ -1,12 +1,7 @@
-// Load client modules
-document.write('<script src="src/client/GameRenderer.js"></script>');
-document.write('<script src="src/client/InputHandler.js"></script>');
-document.write('<script src="src/client/UIManager.js"></script>');
-
 /**
- * Main game client class
+ * Main game client class - handles game logic and coordination
  */
-class TronGame {
+class GameClient {
   constructor() {
     this.socket = null;
     this.playerId = null;
@@ -16,60 +11,40 @@ class TronGame {
     this.animationId = null;
     this.isRendering = false;
     
-    // Wait for modules to load
-    window.addEventListener('load', () => {
-      this.init();
-    });
-  }
-
-  /**
-   * Initialize game components
-   */
-  init() {
     // Initialize components
     this.ui = new UIManager();
     this.renderer = new GameRenderer(this.ui.getCanvas());
     this.input = new InputHandler();
     
-    // Set up UI callbacks
-    this.setupUICallbacks();
-    
-    // Set up input callbacks
-    this.input.onTurn((direction) => {
-      if (this.socket && this.gameState && this.gameState.state === 'playing') {
-        this.socket.emit('turn', direction);
-      }
-    });
-    
-    // Connect to server
-    this.connect();
+    this.setupEventHandlers();
   }
 
   /**
-   * Set up UI event callbacks
+   * Set up event handlers
    */
-  setupUICallbacks() {
+  setupEventHandlers() {
+    // UI event callbacks
     this.ui.on('onJoinGame', (data) => {
       if (this.socket) {
-        this.socket.emit('joinGame', data);
+        this.socket.emit(GAME_CONSTANTS.SOCKET_EVENTS.JOIN_GAME, data);
       }
     });
     
     this.ui.on('onReady', (ready) => {
       if (this.socket) {
-        this.socket.emit('ready', ready);
+        this.socket.emit(GAME_CONSTANTS.SOCKET_EVENTS.READY, ready);
       }
     });
     
     this.ui.on('onSpeedChange', (speed) => {
       if (this.socket) {
-        this.socket.emit('setSpeed', speed);
+        this.socket.emit(GAME_CONSTANTS.SOCKET_EVENTS.SET_SPEED, speed);
       }
     });
     
     this.ui.on('onContinue', () => {
       if (this.socket) {
-        this.socket.emit('restart');
+        this.socket.emit(GAME_CONSTANTS.SOCKET_EVENTS.RESTART);
         this.ui.showScreen('lobby');
         // Reset ready button state
         this.ui.elements.readyButton.classList.remove('ready');
@@ -80,6 +55,13 @@ class TronGame {
     this.ui.on('onQuit', () => {
       location.reload();
     });
+    
+    // Input handler callbacks
+    this.input.onTurn((direction) => {
+      if (this.socket && this.gameState && this.gameState.state === GAME_CONSTANTS.GAME_STATES.PLAYING) {
+        this.socket.emit(GAME_CONSTANTS.SOCKET_EVENTS.TURN, direction);
+      }
+    });
   }
 
   /**
@@ -89,7 +71,7 @@ class TronGame {
     this.socket = io();
     
     // Handle successful join
-    this.socket.on('joined', (data) => {
+    this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.JOINED, (data) => {
       this.playerId = data.playerId;
       this.roomId = data.roomId;
       this.config = data.config;
@@ -107,13 +89,13 @@ class TronGame {
     });
     
     // Handle game state updates
-    this.socket.on('gameState', (gameState) => {
+    this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.GAME_STATE, (gameState) => {
       this.gameState = gameState;
       this.handleGameStateUpdate();
     });
     
     // Handle countdown updates
-    this.socket.on('countdown', (countdown) => {
+    this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.COUNTDOWN, (countdown) => {
       if (this.gameState) {
         this.gameState.countdown = countdown;
         this.ui.updateLobby(this.gameState, this.playerId);
@@ -121,13 +103,13 @@ class TronGame {
     });
     
     // Handle game over
-    this.socket.on('gameOver', (data) => {
+    this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.GAME_OVER, (data) => {
       this.input.setEnabled(false);
-      this.ui.showGameOver(data.winner, data.winnerColor);
+      this.ui.showGameOver(data.winner, data.winnerColor, data.leaderboard, data.roomStats);
     });
     
     // Handle speed changes
-    this.socket.on('speedChanged', (speed) => {
+    this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.SPEED_CHANGED, (speed) => {
       console.log('Game speed changed to:', speed);
       // Update the UI slider to reflect the new speed
       this.ui.elements.speedSlider.value = speed;
@@ -135,7 +117,7 @@ class TronGame {
     });
     
     // Handle errors
-    this.socket.on('error', (message) => {
+    this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.ERROR, (message) => {
       alert('Error: ' + message);
     });
     
@@ -153,14 +135,14 @@ class TronGame {
     if (!this.gameState) return;
     
     switch (this.gameState.state) {
-      case 'lobby':
-      case 'countdown':
+      case GAME_CONSTANTS.GAME_STATES.LOBBY:
+      case GAME_CONSTANTS.GAME_STATES.COUNTDOWN:
         this.ui.showScreen('lobby');
         this.ui.updateLobby(this.gameState, this.playerId);
         this.input.setEnabled(false);
         break;
         
-      case 'playing':
+      case GAME_CONSTANTS.GAME_STATES.PLAYING:
         this.ui.showScreen('game');
         this.input.setEnabled(true);
         if (!this.isRendering) {
@@ -168,7 +150,7 @@ class TronGame {
         }
         break;
         
-      case 'gameOver':
+      case GAME_CONSTANTS.GAME_STATES.GAME_OVER:
         this.input.setEnabled(false);
         this.stopRenderLoop();
         break;
@@ -182,7 +164,7 @@ class TronGame {
     this.isRendering = true;
     
     const render = () => {
-      if (this.gameState && this.gameState.state === 'playing') {
+      if (this.gameState && this.gameState.state === GAME_CONSTANTS.GAME_STATES.PLAYING) {
         this.renderer.render(this.gameState);
         this.animationId = requestAnimationFrame(render);
       } else {
@@ -204,6 +186,3 @@ class TronGame {
     }
   }
 }
-
-// Start the game
-const game = new TronGame();

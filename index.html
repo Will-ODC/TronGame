@@ -54,13 +54,28 @@
             <div class="game-over-content">
                 <h1>Game Over!</h1>
                 <h2 id="winnerText"></h2>
-                <button id="continueButton">Continue</button>
-                <button id="quitButton">Quit to Lobby</button>
+                
+                <!-- Leaderboard Section -->
+                <div id="leaderboardSection" class="leaderboard-section">
+                    <h3>🏆 Leaderboard</h3>
+                    <div id="leaderboardList"></div>
+                </div>
+                
+                <!-- Room Stats Section -->
+                <div id="roomStatsSection" class="room-stats-section">
+                    <h3>📊 Room Statistics</h3>
+                    <div id="roomStatsList"></div>
+                </div>
+                
+                <div class="game-over-buttons">
+                    <button id="continueButton">Continue</button>
+                    <button id="quitButton">Quit to Lobby</button>
+                </div>
             </div>
         </div>
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
-    <script src="game.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>

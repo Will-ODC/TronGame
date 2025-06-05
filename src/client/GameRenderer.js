@@ -6,6 +6,13 @@ class GameRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.config = null;
+    
+    // Interpolation for smooth rendering
+    this.lastState = null;
+    this.targetState = null;
+    this.interpolationFactor = 0;
+    this.lastUpdateTime = 0;
+    this.updateInterval = 1000 / 30; // Match server broadcast rate
   }
 
   /**

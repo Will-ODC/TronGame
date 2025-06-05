@@ -28,6 +28,10 @@ class UIManager {
       
       // Game over elements
       winnerText: document.getElementById('winnerText'),
+      leaderboardSection: document.getElementById('leaderboardSection'),
+      leaderboardList: document.getElementById('leaderboardList'),
+      roomStatsSection: document.getElementById('roomStatsSection'),
+      roomStatsList: document.getElementById('roomStatsList'),
       continueButton: document.getElementById('continueButton'),
       quitButton: document.getElementById('quitButton')
     };
@@ -176,15 +180,65 @@ class UIManager {
   }
 
   /**
-   * Show game over screen
+   * Show game over screen with leaderboard and stats
    * @param {string} winner - Winner name
    * @param {string} winnerColor - Winner color
+   * @param {Array} leaderboard - Player leaderboard data
+   * @param {Object} roomStats - Room statistics
    */
-  showGameOver(winner, winnerColor) {
+  showGameOver(winner, winnerColor, leaderboard = [], roomStats = {}) {
     this.showScreen('gameOver');
     this.elements.winnerText.innerHTML = `
       <span style="color: ${winnerColor || '#fff'}">${winner}</span> wins!
     `;
+    
+    // Display leaderboard
+    if (leaderboard.length > 0) {
+      this.elements.leaderboardSection.style.display = 'block';
+      this.elements.leaderboardList.innerHTML = leaderboard
+        .map((player, index) => {
+          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+          const streak = player.currentStreak > 0 ? ` 🔥${player.currentStreak}` : '';
+          return `
+            <div class="leaderboard-item">
+              <span class="rank">${medal || `#${index + 1}`}</span>
+              <span class="player-name">${player.name}</span>
+              <span class="stats">
+                ${player.wins}W/${player.gamesPlayed}G (${player.winRate}%)${streak}
+                ${player.bestStreak > 1 ? ` • Best: ${player.bestStreak}` : ''}
+              </span>
+            </div>
+          `;
+        })
+        .join('');
+    } else {
+      this.elements.leaderboardSection.style.display = 'none';
+    }
+    
+    // Display room stats
+    if (Object.keys(roomStats).length > 0) {
+      this.elements.roomStatsSection.style.display = 'block';
+      this.elements.roomStatsList.innerHTML = `
+        <div class="room-stat">
+          <span class="stat-label">Total Games:</span>
+          <span class="stat-value">${roomStats.totalGamesPlayed || 0}</span>
+        </div>
+        <div class="room-stat">
+          <span class="stat-label">Total Players:</span>
+          <span class="stat-value">${roomStats.totalPlayers || 0}</span>
+        </div>
+        <div class="room-stat">
+          <span class="stat-label">Active Players:</span>
+          <span class="stat-value">${roomStats.activePlayers || 0}</span>
+        </div>
+        <div class="room-stat">
+          <span class="stat-label">Avg Games/Player:</span>
+          <span class="stat-value">${roomStats.averageGamesPerPlayer || 0}</span>
+        </div>
+      `;
+    } else {
+      this.elements.roomStatsSection.style.display = 'none';
+    }
   }
 
   /**

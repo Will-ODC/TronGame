@@ -1,5 +1,6 @@
 const Player = require('./Player');
 const CollisionDetector = require('./CollisionDetector');
+const ScoreTracker = require('./ScoreTracker');
 
 /**
  * GameRoom manages a single game instance with multiple players
@@ -16,6 +17,18 @@ class GameRoom {
     this.gameLoop = null;
     this.speed = config.PLAYER_SPEED;
     this.collisionDetector = new CollisionDetector(config);
+    
+    // Track available colors and positions
+    this.availableColors = ['red', 'blue', 'green', 'purple'];
+    this.colorAssignments = new Map(); // Track which socket has which color
+    
+    // Performance optimizations
+    this.maxTrailLength = 2000; // Limit trail length to prevent infinite growth
+    this.broadcastRate = 1000 / 30; // Reduce broadcast rate to 30fps instead of 60fps
+    this.lastBroadcast = 0;
+    
+    // Score tracking
+    this.scoreTracker = new ScoreTracker();
     
     // Player starting positions (with more buffer from walls)
     this.startPositions = [
@@ -36,13 +49,34 @@ class GameRoom {
   addPlayer(socketId, name, playerColors) {
     if (this.players.size >= this.config.MAX_PLAYERS) return false;
     
-    const playerNumber = this.players.size;
+    // Find first available color
+    let assignedColor = null;
+    let positionIndex = null;
+    
+    for (let i = 0; i < this.availableColors.length; i++) {
+      const color = this.availableColors[i];
+      if (![...this.colorAssignments.values()].includes(color)) {
+        assignedColor = color;
+        positionIndex = i;
+        break;
+      }
+    }
+    
+    if (!assignedColor) return false; // No colors available
+    
+    // Assign color to this socket
+    this.colorAssignments.set(socketId, assignedColor);
+    
+    const playerName = name || `Player ${this.players.size + 1}`;
     const player = new Player(
       socketId,
-      name || `Player ${playerNumber + 1}`,
-      playerColors[playerNumber],
-      this.startPositions[playerNumber]
+      playerName,
+      assignedColor,
+      this.startPositions[positionIndex]
     );
+    
+    // Register player in score tracking system
+    this.scoreTracker.registerPlayer(playerName);
     
     this.players.set(socketId, player);
     return true;
@@ -54,6 +88,9 @@ class GameRoom {
    */
   removePlayer(socketId) {
     this.players.delete(socketId);
+    // Free up the color
+    this.colorAssignments.delete(socketId);
+    
     // Stop countdown if not enough players
     if (this.players.size < this.config.MIN_PLAYERS && this.state === 'countdown') {
       this.stopCountdown();
@@ -118,6 +155,7 @@ class GameRoom {
    */
   startGame() {
     this.state = 'playing';
+    this.lastBroadcast = Date.now();
     
     // Initialize player trails
     this.players.forEach(player => {
@@ -128,7 +166,13 @@ class GameRoom {
     // Start game update loop
     this.gameLoop = setInterval(() => {
       this.update();
-      this.broadcast();
+      
+      // Broadcast at reduced rate
+      const now = Date.now();
+      if (now - this.lastBroadcast >= this.broadcastRate) {
+        this.broadcast();
+        this.lastBroadcast = now;
+      }
     }, this.config.TICK_RATE);
   }
 
@@ -148,6 +192,11 @@ class GameRoom {
       if (!player.alive) return;
       
       player.move(this.speed, directionVectors);
+      
+      // Limit trail length for performance
+      if (player.trail.length > this.maxTrailLength) {
+        player.trail.shift(); // Remove oldest point
+      }
       
       // Check for collisions (pass current speed for proper buffer calculation)
       if (this.collisionDetector.checkCollision(player, this.players, this.speed)) {
@@ -182,14 +231,25 @@ class GameRoom {
     clearInterval(this.gameLoop);
     this.state = 'gameOver';
     
+    // Record game result in score tracker
+    const participants = Array.from(this.players.values()).map(p => p.name);
+    const winnerName = winner ? winner.name : null;
+    this.scoreTracker.recordGame(winnerName, participants);
+    
     // Reset ready states when game ends
     this.players.forEach(player => {
       player.ready = false;
     });
     
+    // Get updated leaderboard
+    const leaderboard = this.scoreTracker.getLeaderboard();
+    const roomStats = this.scoreTracker.getRoomStats();
+    
     this.io.to(this.roomId).emit('gameOver', {
       winner: winner ? winner.name : 'No one',
-      winnerColor: winner ? winner.color : null
+      winnerColor: winner ? winner.color : null,
+      leaderboard: leaderboard,
+      roomStats: roomStats
     });
   }
 
@@ -200,11 +260,12 @@ class GameRoom {
     this.state = 'lobby';
     this.countdown = this.config.COUNTDOWN_DURATION;
     
-    // Reset all players
-    let playerIndex = 0;
+    // Reset all players to their correct positions based on color
     this.players.forEach(player => {
-      player.reset(this.startPositions[playerIndex]);
-      playerIndex++;
+      const colorIndex = this.availableColors.indexOf(player.color);
+      if (colorIndex !== -1) {
+        player.reset(this.startPositions[colorIndex]);
+      }
     });
   }
 
@@ -212,8 +273,21 @@ class GameRoom {
    * Broadcast current game state to all players in room
    */
   broadcast() {
+    // Optimize data sent - compress trail data
+    const optimizedPlayers = Array.from(this.players.values()).map(p => {
+      const playerData = p.toJSON();
+      
+      // For performance, only send every nth trail point when trail is long
+      if (playerData.trail.length > 100) {
+        const step = Math.ceil(playerData.trail.length / 100);
+        playerData.trail = playerData.trail.filter((_, index) => index % step === 0);
+      }
+      
+      return playerData;
+    });
+    
     const gameState = {
-      players: Array.from(this.players.values()).map(p => p.toJSON()),
+      players: optimizedPlayers,
       state: this.state,
       countdown: this.countdown,
       speed: this.speed,
