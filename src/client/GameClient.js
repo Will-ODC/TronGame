@@ -104,6 +104,7 @@ class GameClient {
     
     // Handle game over
     this.socket.on(GAME_CONSTANTS.SOCKET_EVENTS.GAME_OVER, (data) => {
+      console.log('Game Over event received:', data);
       this.input.setEnabled(false);
       this.ui.showGameOver(data.winner, data.winnerColor, data.leaderboard, data.roomStats);
     });

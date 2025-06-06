@@ -187,6 +187,7 @@ class UIManager {
    * @param {Object} roomStats - Room statistics
    */
   showGameOver(winner, winnerColor, leaderboard = [], roomStats = {}) {
+    console.log('Showing game over screen with data:', { winner, winnerColor, leaderboard, roomStats });
     this.showScreen('gameOver');
     this.elements.winnerText.innerHTML = `
       <span style="color: ${winnerColor || '#fff'}">${winner}</span> wins!

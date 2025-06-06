@@ -22,11 +22,19 @@ class Player {
     if (!this.alive) return;
     
     const dir = directionVectors[this.direction];
-    this.x += dir.x * speed;
-    this.y += dir.y * speed;
+    const newX = this.x + (dir.x * speed);
+    const newY = this.y + (dir.y * speed);
     
-    // Add new position to trail
-    this.trail.push({ x: this.x, y: this.y });
+    // Only add to trail if we've moved a minimum distance to prevent too many trail points
+    const lastTrailPoint = this.trail[this.trail.length - 1];
+    if (!lastTrailPoint || 
+        Math.abs(newX - lastTrailPoint.x) >= 1 || 
+        Math.abs(newY - lastTrailPoint.y) >= 1) {
+      this.trail.push({ x: newX, y: newY });
+    }
+    
+    this.x = newX;
+    this.y = newY;
   }
 
   /**

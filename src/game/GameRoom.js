@@ -28,7 +28,19 @@ class GameRoom {
     this.lastBroadcast = 0;
     
     // Score tracking
-    this.scoreTracker = new ScoreTracker();
+    try {
+      this.scoreTracker = new ScoreTracker();
+      console.log('ScoreTracker initialized successfully for room:', roomId);
+    } catch (error) {
+      console.error('Failed to initialize ScoreTracker:', error);
+      // Create a mock score tracker to prevent crashes
+      this.scoreTracker = {
+        registerPlayer: () => {},
+        recordGame: () => {},
+        getLeaderboard: () => [],
+        getRoomStats: () => ({})
+      };
+    }
     
     // Player starting positions (with more buffer from walls)
     this.startPositions = [
@@ -245,6 +257,12 @@ class GameRoom {
     const leaderboard = this.scoreTracker.getLeaderboard();
     const roomStats = this.scoreTracker.getRoomStats();
     
+    console.log('Game Over - Sending data:', {
+      winner: winner ? winner.name : 'No one',
+      leaderboardLength: leaderboard.length,
+      roomStats: roomStats
+    });
+    
     this.io.to(this.roomId).emit('gameOver', {
       winner: winner ? winner.name : 'No one',
       winnerColor: winner ? winner.color : null,
@@ -277,10 +295,27 @@ class GameRoom {
     const optimizedPlayers = Array.from(this.players.values()).map(p => {
       const playerData = p.toJSON();
       
-      // For performance, only send every nth trail point when trail is long
-      if (playerData.trail.length > 100) {
-        const step = Math.ceil(playerData.trail.length / 100);
-        playerData.trail = playerData.trail.filter((_, index) => index % step === 0);
+      // Compress trail data for better performance
+      if (playerData.trail.length > this.config.TRAIL_COMPRESSION_THRESHOLD) {
+        const compressed = [];
+        const step = Math.max(1, Math.floor(playerData.trail.length / this.config.TRAIL_COMPRESSION_THRESHOLD));
+        
+        // Always include first point
+        if (playerData.trail.length > 0) {
+          compressed.push(playerData.trail[0]);
+        }
+        
+        // Sample trail points
+        for (let i = step; i < playerData.trail.length - 1; i += step) {
+          compressed.push(playerData.trail[i]);
+        }
+        
+        // Always include last point for smooth head rendering
+        if (playerData.trail.length > 1) {
+          compressed.push(playerData.trail[playerData.trail.length - 1]);
+        }
+        
+        playerData.trail = compressed;
       }
       
       return playerData;
