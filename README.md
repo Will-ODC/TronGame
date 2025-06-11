@@ -4,13 +4,16 @@ A real-time multiplayer Tron light cycle game built with Node.js, Socket.io, and
 
 ## Screenshots
 
-![Lobby](screenshots/lobby.png)
+<img src="screenshots/lobby.png" alt="Lobby" width="600">
+
 *Game lobby where players can join and ready up*
 
-![Gameplay](screenshots/gaemplay.png)
+<img src="screenshots/gaemplay.png" alt="Gameplay" width="600">
+
 *Multiplayer gameplay with light cycles*
 
-![Game Over](screenshots/game-over.png)
+<img src="screenshots/game-over.png" alt="Game Over" width="600">
+
 *Game over screen showing the winner*
 
 ## Features
