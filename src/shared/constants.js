@@ -18,8 +18,9 @@ const GAME_CONSTANTS = {
   MAX_PLAYERS: 4,
   
   // Performance
-  MAX_TRAIL_LENGTH: 2000,
-  TRAIL_COMPRESSION_THRESHOLD: 100,
+  // Trail limits removed to prevent trail reshaping
+  // MAX_TRAIL_LENGTH: 2000,  // Deprecated
+  // TRAIL_COMPRESSION_THRESHOLD: 100,  // Deprecated
   
   // Player colors
   PLAYER_COLORS: ['red', 'blue', 'green', 'purple'],

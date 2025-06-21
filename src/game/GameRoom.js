@@ -23,8 +23,8 @@ class GameRoom {
     this.colorAssignments = new Map(); // Track which socket has which color
     
     // Performance optimizations
-    this.maxTrailLength = 2000; // Limit trail length to prevent infinite growth
-    this.broadcastRate = 1000 / 30; // Reduce broadcast rate to 30fps instead of 60fps
+    // Removed trail length limiting to prevent trail reshaping
+    this.broadcastRate = 1000 / 30; // Broadcast rate at 30fps
     this.lastBroadcast = 0;
     
     // Score tracking
@@ -205,10 +205,7 @@ class GameRoom {
       
       player.move(this.speed, directionVectors);
       
-      // Limit trail length for performance
-      if (player.trail.length > this.maxTrailLength) {
-        player.trail.shift(); // Remove oldest point
-      }
+      // Trail length is no longer limited to preserve trail integrity
       
       // Check for collisions (pass current speed for proper buffer calculation)
       if (this.collisionDetector.checkCollision(player, this.players, this.speed)) {
@@ -291,38 +288,11 @@ class GameRoom {
    * Broadcast current game state to all players in room
    */
   broadcast() {
-    // Optimize data sent - compress trail data
-    const optimizedPlayers = Array.from(this.players.values()).map(p => {
-      const playerData = p.toJSON();
-      
-      // Compress trail data for better performance
-      if (playerData.trail.length > this.config.TRAIL_COMPRESSION_THRESHOLD) {
-        const compressed = [];
-        const step = Math.max(1, Math.floor(playerData.trail.length / this.config.TRAIL_COMPRESSION_THRESHOLD));
-        
-        // Always include first point
-        if (playerData.trail.length > 0) {
-          compressed.push(playerData.trail[0]);
-        }
-        
-        // Sample trail points
-        for (let i = step; i < playerData.trail.length - 1; i += step) {
-          compressed.push(playerData.trail[i]);
-        }
-        
-        // Always include last point for smooth head rendering
-        if (playerData.trail.length > 1) {
-          compressed.push(playerData.trail[playerData.trail.length - 1]);
-        }
-        
-        playerData.trail = compressed;
-      }
-      
-      return playerData;
-    });
+    // Send complete trail data without compression to prevent reshaping
+    const players = Array.from(this.players.values()).map(p => p.toJSON());
     
     const gameState = {
-      players: optimizedPlayers,
+      players: players,
       state: this.state,
       countdown: this.countdown,
       speed: this.speed,
